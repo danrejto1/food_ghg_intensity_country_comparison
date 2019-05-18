@@ -19,15 +19,18 @@ max(df$Year)
 
 items <- unique(df$Item)
 countries <- unique(df$Area)
+utf8::utf8_valid(countries) #shows that 2 countries are not in UTF-8 encoding
 
 #set paramaters for filtering entire dataset
 e <- "Emissions intensity" #element
 y <- max(df$Year) #year
-
+countries <- countries[utf8::utf8_valid(countries)==T] #only utf-8 valid countries
+ 
 #filter data for use in shiny app
 df <- df %>% 
   filter(Year == y,
-         Element == e)
+         Element == e,
+         Area %in% countries)
 
 #save filtered data
 write_csv(x = df, path = "ghg_intensity_comparison/emission_intensities.csv")

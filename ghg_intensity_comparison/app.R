@@ -8,40 +8,54 @@
 #
 
 library(shiny)
+library(plotly)
+library(dplyr)
+library(ggplot2)
 
-# Define UI for application that draws a histogram
+df <- read.csv( file = "emission_intensities.csv")
+items <- unique(df$Item)
+countries <- unique(df$Area)
+
+# Define UI for application that draws bar plot
 ui <- fluidPage(
    
    # Application title
-   titlePanel("Old Faithful Geyser Data"),
+   titlePanel("Comparison of Greenhouse Gas Intensity of Foods"),
    
-   # Sidebar with a slider input for number of bins 
-   sidebarLayout(
+   # Sidebar
       sidebarPanel(
-         sliderInput("bins",
-                     "Number of bins:",
-                     min = 1,
-                     max = 50,
-                     value = 30)
-      ),
-      
-      # Show a plot of the generated distribution
-      mainPanel(
-         plotOutput("distPlot")
-      )
-   )
-)
-
-# Define server logic required to draw a histogram
-server <- function(input, output) {
+        selectInput(inputId = "countries", 
+                    label = "Select Countries",
+                    choices = c(countries), 
+                    selected = c("United States of America","China"),
+                    multiple = TRUE),
+        selectInput(inputId = "item", 
+                    label = "Select Food",
+                    choices = c(items), 
+                    selected = "Meat, cattle",
+                    multiple = FALSE) #only allow 1 item
+        ),
    
-   output$distPlot <- renderPlot({
-      # generate bins based on input$bins from ui.R
-      x    <- faithful[, 2] 
-      bins <- seq(min(x), max(x), length.out = input$bins + 1)
-      
-      # draw the histogram with the specified number of bins
-      hist(x, breaks = bins, col = 'darkgray', border = 'white')
+   #Main panel with bar plot
+   mainPanel(plotlyOutput(outputId = "plot")
+             )
+   )
+
+
+# Define server logic required to draw plot
+server <- function(input, output) {
+
+  
+   output$plot <- renderPlotly({
+      df %>% 
+         filter(Area %in% input$countries,
+                Item == input$item) %>%   
+         ggplot() +
+         geom_col(aes(x = Area, y=Value), fill = "#0D4459")+
+         labs(x="", y="kg CO2eq/kg product",
+              title = paste0("Comparison of Greenhouse Gas Emissions for ", input$item))+
+         theme_minimal() 
+
    })
 }
 
